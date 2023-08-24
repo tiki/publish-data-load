@@ -1,8 +1,8 @@
 version = 0.1
 [default.deploy.parameters]
-stack_name = "OceanData"
+stack_name = "ocean-data"
 resolve_s3 = true
-s3_prefix = "tiki-sam/ocean/data"
+s3_prefix = "mytiki-sam/ocean/data"
 region = "us-east-2"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"

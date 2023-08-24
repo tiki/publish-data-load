@@ -51,9 +51,9 @@ Resources:
         - !Ref Queue
 
 Outputs:
-  HelloWorldFunction:
-    Description: "Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldQueue:
-    Description: "Queue ARN"
-    Value: !GetAtt HelloWorldQueue.Arn
+  Function:
+    Description: "ARN"
+    Value: !GetAtt Function.Arn
+  Queue:
+    Description: "ARN"
+    Value: !GetAtt Queue.Arn
