@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Hello World
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 20
+    MemorySize: 512
+
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: HelloWorldFunction
+      Handler: com.mytiki.ocean.App::handleRequest
+      Runtime: java17
+      Architectures:
+        - arm64
+      MemorySize: 512
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          PARAM1: VALUE
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Enabled: true
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
+            BatchSize: 10
+            MaximumBatchingWindowInSeconds: 10
+            Queue: !GetAtt HelloWorldQueue.Arn
+
+  HelloWorldQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: hello-world-queue
+
+  HelloWorldBucket:
+    Type: AWS::S3::Bucket
+    DependsOn:
+      - HelloWorldQueuePolicy
+    Properties:
+      BucketName: tiki-hello-world
+      #      LoggingConfiguration:
+      #        DestinationBucketName:
+      #        LogFilePrefix:
+      NotificationConfiguration:
+        QueueConfigurations:
+          - Event: "s3:ObjectCreated:*"
+            Queue: !GetAtt HelloWorldQueue.Arn
+  #            Filter:
+
+  HelloWorldQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Id: HelloWorldPolicy
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action: SQS:SendMessage
+            Resource: !GetAtt HelloWorldQueue.Arn
+            Condition:
+              ArnLike:
+                aws:SourceArn: "arn:aws:s3:::tiki-hello-world"
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      Queues:
+        - !Ref HelloWorldQueue
+
+
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  HelloWorldFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt HelloWorldFunction.Arn
+  HelloWorldFunctionIamRole:
+    Description: "Implicit IAM Role created for Hello World function"
+    Value: !GetAtt HelloWorldFunctionRole.Arn
+  HelloWorldQueue:
+    Description: "Hello World SQS ARN"
+    Value: !GetAtt HelloWorldQueue.Arn
+  HelloWorldBucket:
+    Description: "Hello World S3 ARN"
+    Value: !GetAtt HelloWorldBucket.Arn
