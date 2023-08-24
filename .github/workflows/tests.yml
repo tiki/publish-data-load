@@ -1,0 +1,45 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+# Cancel any active builds when new commits are pushed
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '20'
+          distribution: 'zulu'
+
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Maven Package
+        run: mvn clean package
+
+      - name: Publish Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test Report
+          path: "target/surefire-reports/**/*.xml"
+          reporter: java-junit
+
+      - name: Validate Infra Template
+        run: cd infra && sam validate --lint
+
+      - name: Build Infra
+        run: cd infra && sam build
