@@ -31,6 +31,7 @@ replay_pid*
 
 # Generated Outputs
 target
+dependency-reduced-pom.xml
 
 # Fuckin Macs
 .DS_Store
