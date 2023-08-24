@@ -2,6 +2,11 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Ocean - Data Infrastructure
 
+Parameters:
+  MetadataQueue:
+    Type: String
+    Description: The name of Metadata FIFO Queue
+
 Resources:
   Function:
     Type: AWS::Serverless::Function
@@ -24,6 +29,9 @@ Resources:
             BatchSize: 10
             MaximumBatchingWindowInSeconds: 10
             Queue: !GetAtt Queue.Arn
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !Ref MetadataQueue
 
   Queue:
     Type: AWS::SQS::Queue
@@ -54,6 +62,7 @@ Outputs:
   Function:
     Description: "ARN"
     Value: !GetAtt Function.Arn
+
   Queue:
     Description: "ARN"
     Value: !GetAtt Queue.Arn
