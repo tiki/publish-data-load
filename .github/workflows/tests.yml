@@ -23,10 +23,12 @@ jobs:
           java-version: '20'
           distribution: 'zulu'
 
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
       - name: Maven Package
         run: mvn clean package
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_ST }}
 
       - name: Publish Results
         uses: dorny/test-reporter@v1
@@ -35,3 +37,9 @@ jobs:
           name: Test Report
           path: "target/surefire-reports/**/*.xml"
           reporter: java-junit
+
+      - name: Validate Infra Template
+        run: cd infra && sam validate --lint
+
+      - name: Build Infra
+        run: cd infra && sam build
