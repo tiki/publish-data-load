@@ -50,7 +50,7 @@ public class AppTest {
 
     @Test
     public void tester() throws IOException {
-        Avro avro = Avro.load();
+        AvroToParquet avro = AvroToParquet.load();
         List<GenericRecord> records = avro.read("test-data.avro");
         avro.write("output", records);
     }

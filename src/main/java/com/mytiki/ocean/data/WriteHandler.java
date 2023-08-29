@@ -25,10 +25,10 @@ public class WriteHandler implements RequestHandler<SQSEvent, SQSBatchResponse> 
     protected static final Logger logger = Logger.getLogger(WriteHandler.class);
     private final PojoSerializer<S3EventNotification> s3EventSerializer =
             LambdaEventSerializers.serializerFor(S3EventNotification.class, ClassLoader.getSystemClassLoader());
-    private final Avro avro;
+    private final AvroToParquet atp;
 
-    public WriteHandler(Avro avro) {
-        this.avro = avro;
+    public WriteHandler(AvroToParquet atp) {
+        this.atp = atp;
     }
 
     @Override
@@ -43,7 +43,7 @@ public class WriteHandler implements RequestHandler<SQSEvent, SQSBatchResponse> 
                     String key = record.getS3().getObject().getKey();
                     String table = key.split("/")[0];
                     if(table == null) throw new IllegalArgumentException("No table name in key: " + key);
-                    List<GenericRecord> stagedRecords = avro.read(key);
+                    List<GenericRecord> stagedRecords = atp.read(key);
                     if(tableGrouping.containsKey(table)) tableGrouping.get(table).addAll(stagedRecords);
                     else tableGrouping.put(table, stagedRecords);
                 } catch (Exception ex) {
@@ -57,7 +57,7 @@ public class WriteHandler implements RequestHandler<SQSEvent, SQSBatchResponse> 
             String table = entry.getKey();
             List<GenericRecord> records = entry.getValue();
             try {
-                avro.write(table, records);
+                atp.write(table, records);
             } catch (IOException ex) {
                 logger.error(ex, ex.fillInStackTrace());
                 throw new RuntimeException(ex);

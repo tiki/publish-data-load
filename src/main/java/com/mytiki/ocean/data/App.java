@@ -21,7 +21,7 @@ public class App implements RequestHandler<SQSEvent, SQSBatchResponse> {
     public SQSBatchResponse handleRequest(final SQSEvent event, final Context context) {
         try {
             Initialize.logger();
-            WriteHandler handler = new WriteHandler(Avro.load());
+            WriteHandler handler = new WriteHandler(AvroToParquet.load());
             return handler.handleRequest(event, context);
         }catch (Exception ex){
             logger.error(ex, ex.fillInStackTrace());

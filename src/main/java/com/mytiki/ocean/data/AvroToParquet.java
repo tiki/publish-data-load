@@ -8,61 +8,48 @@ package com.mytiki.ocean.data;
 import com.mytiki.ocean.common.Initialize;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
-import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DatumWriter;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.parquet.avro.AvroParquetWriter;
+import org.apache.parquet.hadoop.ParquetWriter;
 import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
-public class Avro {
+public class AvroToParquet {
     private final S3Client client;
     private final String readBucket;
     private final String writeBucket;
+    private final String credentialsProvider;
 
-    public Avro(Properties properties) {
+    public AvroToParquet(Properties properties) {
         client = S3Client.builder()
                 .region(Region.of(properties.getProperty("s3-region")))
                 .build();
         readBucket = properties.getProperty("s3-read-bucket");
         writeBucket = properties.getProperty("s3-write-bucket");
+        credentialsProvider = properties.getProperty("s3-credentials-provider");
     }
 
-    public static Avro load() {
-        return Avro.load("avro.properties");
+    public static AvroToParquet load() {
+        return AvroToParquet.load("avro.properties");
     }
 
-    public static Avro load(String filename) {
+    public static AvroToParquet load(String filename) {
         Properties properties = Initialize.properties(filename);
-        return new Avro(properties);
-    }
-
-    public S3Client getClient() {
-        return client;
-    }
-
-    public String getReadBucket() {
-        return readBucket;
-    }
-
-    public String getWriteBucket() {
-        return writeBucket;
+        return new AvroToParquet(properties);
     }
 
     public List<GenericRecord> read(String key) throws IOException {
@@ -82,21 +69,20 @@ public class Avro {
     public void write(String keyPrefix, List<GenericRecord> records) throws IOException {
         if(records == null || records.isEmpty()) return;
 
-        String key = String.join("/", keyPrefix, UUID.randomUUID() + ".avro");
+        String key = String.join("/", keyPrefix, UUID.randomUUID() + ".parquet");
         Schema schema = records.get(0).getSchema();
-        DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(records.get(0).getSchema());
-        DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
 
-        PipedInputStream inputStream = new PipedInputStream();
-        PipedOutputStream outputStream = new PipedOutputStream(inputStream);
+        Path path = new Path(String.join("/", "s3a:/", writeBucket, key));
+        Configuration conf = new Configuration();
+        conf.set("fs.s3a.aws.credentials.provider", credentialsProvider);
 
-        dataFileWriter.create(schema, outputStream);
-        for (GenericRecord record : records) dataFileWriter.append(record);
-        dataFileWriter.close();
+        ParquetWriter<Object> writer = AvroParquetWriter
+                .builder(path)
+                .withSchema(schema)
+                .withConf(conf)
+                .build();
 
-        client.putObject(
-                PutObjectRequest.builder().bucket(writeBucket).key(key).build(),
-                RequestBody.fromContentProvider(() -> inputStream, "application/octet-stream")
-        );
+        for (GenericRecord record : records) writer.write(record);
+        writer.close();
     }
 }
