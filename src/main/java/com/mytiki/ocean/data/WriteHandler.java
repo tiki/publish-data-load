@@ -43,7 +43,7 @@ public class WriteHandler implements RequestHandler<SQSEvent, SQSBatchResponse> 
                     String key = record.getS3().getObject().getKey();
                     String table = key.split("/")[0];
                     if(table == null) throw new IllegalArgumentException("No table name in key: " + key);
-                    List<GenericRecord> stagedRecords = atp.read(key);
+                    List<GenericRecord> stagedRecords = atp.read(record.getS3().getBucket().getName(), key);
                     if(tableGrouping.containsKey(table)) tableGrouping.get(table).addAll(stagedRecords);
                     else tableGrouping.put(table, stagedRecords);
                 } catch (Exception ex) {

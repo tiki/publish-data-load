@@ -30,16 +30,14 @@ import java.util.UUID;
 
 public class AvroToParquet {
     private final S3Client client;
-    private final String readBucket;
-    private final String writeBucket;
+    private final String bucket;
     private final String credentialsProvider;
 
     public AvroToParquet(Properties properties) {
         client = S3Client.builder()
                 .region(Region.of(properties.getProperty("s3-region")))
                 .build();
-        readBucket = properties.getProperty("s3-read-bucket");
-        writeBucket = properties.getProperty("s3-write-bucket");
+        bucket = properties.getProperty("s3-bucket");
         credentialsProvider = properties.getProperty("s3-credentials-provider");
     }
 
@@ -52,10 +50,10 @@ public class AvroToParquet {
         return new AvroToParquet(properties);
     }
 
-    public List<GenericRecord> read(String key) throws IOException {
+    public List<GenericRecord> read(String bucket, String key) throws IOException {
         List<GenericRecord> records = new ArrayList<>();
         ResponseInputStream<GetObjectResponse> inputStream = client.getObject(
-                GetObjectRequest.builder().bucket(readBucket).key(key).build(),
+                GetObjectRequest.builder().bucket(bucket).key(key).build(),
                 ResponseTransformer.toInputStream()
         );
 
@@ -69,13 +67,11 @@ public class AvroToParquet {
     public void write(String keyPrefix, List<GenericRecord> records) throws IOException {
         if(records == null || records.isEmpty()) return;
 
-        String key = String.join("/", keyPrefix, UUID.randomUUID() + ".parquet");
         Schema schema = records.get(0).getSchema();
-
-        Path path = new Path(String.join("/", "s3a:/", writeBucket, key));
+        Path path = new Path(String.join("/",
+                "s3a:/", bucket, keyPrefix, UUID.randomUUID() + ".parquet"));
         Configuration conf = new Configuration();
         conf.set("fs.s3a.aws.credentials.provider", credentialsProvider);
-
         ParquetWriter<Object> writer = AvroParquetWriter
                 .builder(path)
                 .withSchema(schema)
