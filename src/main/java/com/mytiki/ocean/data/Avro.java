@@ -92,12 +92,11 @@ public class Avro {
 
         dataFileWriter.create(schema, outputStream);
         for (GenericRecord record : records) dataFileWriter.append(record);
+        dataFileWriter.close();
 
         client.putObject(
                 PutObjectRequest.builder().bucket(writeBucket).key(key).build(),
                 RequestBody.fromContentProvider(() -> inputStream, "application/octet-stream")
         );
-
-        dataFileWriter.close();
     }
 }

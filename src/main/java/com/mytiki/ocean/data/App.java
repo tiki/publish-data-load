@@ -9,6 +9,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SQSBatchResponse;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
+import com.mytiki.ocean.common.Initialize;
 import org.apache.log4j.Logger;
 
 import java.util.List;
