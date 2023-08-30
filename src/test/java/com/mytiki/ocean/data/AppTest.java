@@ -40,7 +40,7 @@ public class AppTest {
     void init(@Mock AvroToParquet atp) throws IOException {
         this.atp = atp;
         Mockito.lenient().doReturn(List.of()).when(atp).read(Mockito.anyString(), Mockito.anyString());
-        Mockito.lenient().doNothing().when(atp).write(Mockito.anyString(), Mockito.anyList());
+        Mockito.lenient().doReturn(new FileMetadata()).when(atp).write(Mockito.anyString(), Mockito.anyList());
         Mockito.lenient().doReturn("dummy").when(atp).notify(Mockito.any());
     }
 
