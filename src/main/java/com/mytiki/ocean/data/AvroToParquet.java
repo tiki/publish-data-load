@@ -6,6 +6,7 @@
 package com.mytiki.ocean.data;
 
 import com.mytiki.ocean.common.Initialize;
+import com.mytiki.ocean.common.Mapper;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
@@ -19,8 +20,10 @@ import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,20 +32,26 @@ import java.util.Properties;
 import java.util.UUID;
 
 public class AvroToParquet {
-    private final S3Client client;
+    private final S3Client s3;
+    private final SqsClient sqs;
     private final String bucket;
     private final String credentialsProvider;
+    private final String queue;
 
     public AvroToParquet(Properties properties) {
-        client = S3Client.builder()
-                .region(Region.of(properties.getProperty("s3-region")))
+        sqs =  SqsClient.builder()
+                .region(Region.of(properties.getProperty("s3.region")))
                 .build();
-        bucket = properties.getProperty("s3-bucket");
-        credentialsProvider = properties.getProperty("s3-credentials-provider");
+        s3 = S3Client.builder()
+                .region(Region.of(properties.getProperty("sqs.region")))
+                .build();
+        bucket = properties.getProperty("s3.bucket");
+        credentialsProvider = properties.getProperty("s3.credentials.provider");
+        queue = properties.getProperty("sqs.url");
     }
 
     public static AvroToParquet load() {
-        return AvroToParquet.load("avro.properties");
+        return AvroToParquet.load("aws.properties");
     }
 
     public static AvroToParquet load(String filename) {
@@ -52,7 +61,7 @@ public class AvroToParquet {
 
     public List<GenericRecord> read(String bucket, String key) throws IOException {
         List<GenericRecord> records = new ArrayList<>();
-        ResponseInputStream<GetObjectResponse> inputStream = client.getObject(
+        ResponseInputStream<GetObjectResponse> inputStream = s3.getObject(
                 GetObjectRequest.builder().bucket(bucket).key(key).build(),
                 ResponseTransformer.toInputStream()
         );
@@ -64,21 +73,42 @@ public class AvroToParquet {
         return records;
     }
 
-    public void write(String keyPrefix, List<GenericRecord> records) throws IOException {
-        if(records == null || records.isEmpty()) return;
-
+    public FileMetadata write(String table, List<GenericRecord> records) throws IOException {
         Schema schema = records.get(0).getSchema();
-        Path path = new Path(String.join("/",
-                "s3a:/", bucket, keyPrefix, UUID.randomUUID() + ".parquet"));
+        String key = String.join("/", table, UUID.randomUUID() + ".parquet");
         Configuration conf = new Configuration();
         conf.set("fs.s3a.aws.credentials.provider", credentialsProvider);
         ParquetWriter<Object> writer = AvroParquetWriter
-                .builder(path)
+                .builder(new Path(String.join("/", "s3a:/", bucket, key)))
                 .withSchema(schema)
                 .withConf(conf)
                 .build();
 
         for (GenericRecord record : records) writer.write(record);
         writer.close();
+
+        GetObjectAttributesRequest attributesRequest = GetObjectAttributesRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .objectAttributes(ObjectAttributes.OBJECT_SIZE)
+                .build();
+
+        GetObjectAttributesResponse rsp = s3.getObjectAttributes(attributesRequest);
+        FileMetadata writeDetails = new FileMetadata();
+        writeDetails.setSize(rsp.objectSize());
+        writeDetails.setUri(String.join("/", "s3:/", bucket, key));
+        writeDetails.setCount(records.size());
+        writeDetails.setTable(table);
+        return writeDetails;
+    }
+
+    public String notify(FileMetadata details){
+        SendMessageRequest request = SendMessageRequest.builder()
+                .queueUrl(queue)
+                .messageBody(new Mapper().writeValueAsString(details))
+                .messageGroupId(details.getTable())
+                .build();
+        SendMessageResponse rsp = sqs.sendMessage(request);
+        return rsp.messageId();
     }
 }

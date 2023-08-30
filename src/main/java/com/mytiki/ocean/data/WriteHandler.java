@@ -56,11 +56,16 @@ public class WriteHandler implements RequestHandler<SQSEvent, SQSBatchResponse> 
         for (Map.Entry<String, List<GenericRecord>> entry : tableGrouping.entrySet()) {
             String table = entry.getKey();
             List<GenericRecord> records = entry.getValue();
-            try {
-                atp.write(table, records);
-            } catch (IOException ex) {
-                logger.error(ex, ex.fillInStackTrace());
-                throw new RuntimeException(ex);
+            if(records.isEmpty()) {
+                logger.warn("No records. Skipping. Table: " + table);
+            }else {
+                try {
+                    FileMetadata details = atp.write(table, records);
+                    atp.notify(details);
+                } catch (Exception ex) {
+                    logger.error(ex, ex.fillInStackTrace());
+                    throw new RuntimeException(ex);
+                }
             }
         }
 
