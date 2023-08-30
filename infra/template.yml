@@ -6,6 +6,9 @@ Parameters:
   MetadataQueue:
     Type: String
     Description: The name of Metadata FIFO Queue
+  TableName:
+    Type: String
+    Description: The name of Table to process events for
 
 Resources:
   Function:
@@ -29,6 +32,9 @@ Resources:
             BatchSize: 10
             MaximumBatchingWindowInSeconds: 10
             Queue: !GetAtt Queue.Arn
+            FilterCriteria:
+              Filters:
+                - Pattern: !Sub "{ \"body\" : { \"s3\" : { \"key\" : [ { \"prefix\": \"${TableName}/\" } ] } } }"
       Policies:
         - SQSSendMessagePolicy:
             QueueName: !Ref MetadataQueue
