@@ -55,7 +55,11 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: SAM Deploy AWS
-        run: cd infra/aws && sam build && sam package && sam deploy
+        run: |
+          cd infra/aws 
+          sam build -t queue.yml
+          sam package -t queue.yml
+          sam deploy -t queue.yml
 
       - name: Get Version
         id: version

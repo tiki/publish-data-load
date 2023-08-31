@@ -9,9 +9,6 @@ Parameters:
   MetadataQueue:
     Type: String
     Description: The name of the Metadata FIFO Queue.
-  TableName:
-    Type: String
-    Description: The name of the Table to process events for.
 
 Resources:
   Queue:
@@ -21,13 +18,13 @@ Resources:
       Parameters:
         SourceBucket: !Ref SourceBucket
 
-  Function:
+  FunctionLogs:
     Type: AWS::Serverless::Application
     Properties:
       Location: function.yml
       Parameters:
         MetadataQueue: !Ref MetadataQueue
-        TableName: !Ref TableName
+        TableName: logs
         IngestQueue: !GetAtt [Queue, Outputs.Arn]
 
 
