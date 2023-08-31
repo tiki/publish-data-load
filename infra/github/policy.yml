@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: GitHub OIDC Deployment Policy
+
+Parameters:
+  RoleName:
+    Description: Name of the IAM Role for the inline policy
+    Type: String
+
+Resources:
+  Role:
+    Type: AWS::IAM::RolePolicy
+    Properties:
+      RoleName: !Ref RoleName
+      PolicyName: DeploymentPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - iam:CreateRole
+              - iam:TagRole
+              - iam:GetRolePolicy
+              - iam:PutRolePolicy
+              - iam:AttachRolePolicy
+              - iam:GetRole
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - iam:PassRole
+            Resource: "*"
+            Condition:
+              StringEquals:
+                iam:PassedToService: lambda.amazonaws.com
+          - Effect: Allow
+            Action:
+              - lambda:CreateFunction
+              - lambda:TagResource
+              - lambda:GetFunction
+              - lambda:UpdateFunctionCode
+              - lambda:ListTags
+              - lambda:CreateEventSourceMapping
+              - lambda:GetEventSourceMapping
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - sqs:CreateQueue
+              - sqs:GetQueueAttributes
+              - sqs:SetQueueAttributes
+            Resource: "*"

@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Ocean-Data SQS Queue
+
+Parameters:
+  QueueName:
+    Type: String
+    Default: ocean-data
+    Description: The name of the Ingest Queue.
+  SourceBucket:
+    Type: String
+    Description: The name the bucket to allow messages from.
+
+Resources:
+  Queue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Ref QueueName
+
+  QueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action: SQS:SendMessage
+            Resource: !GetAtt Queue.Arn
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub "arn:aws:s3:::${SourceBucket}"
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      Queues:
+        - !Ref Queue
+
+Outputs:
+  Arn:
+    Value: !GetAtt Queue.Arn
