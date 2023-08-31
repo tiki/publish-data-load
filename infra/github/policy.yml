@@ -39,8 +39,8 @@ Resources:
               - lambda:GetFunction
               - lambda:UpdateFunctionCode
               - lambda:ListTags
-              - lambda:CreateFunctionUrlConfig
-              - lambda:GetFunctionUrlConfig
+              - lambda:CreateEventSourceMapping
+              - lambda:GetEventSourceMapping
             Resource: "*"
           - Effect: Allow
             Action:
