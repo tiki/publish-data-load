@@ -4,8 +4,8 @@ on:
   pull_request:
     branches:
       - main
-#    types:
-#      - closed
+    types:
+      - closed
 
 env:
   SESSION_NAME : "gh_action"
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   Deploy:
-    #if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
+    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
     runs-on: ubuntu-latest
     environment: Production
     permissions:
@@ -61,7 +61,7 @@ jobs:
         id: version
         run: echo "current=$(xmlstarlet sel -t -m _:project -v _:version pom.xml)" >> $GITHUB_OUTPUT
 
-#      - name: Create Release
-#        uses: ncipollo/release-action@v1
-#        with:
-#          tag: ${{ steps.version.outputs.current }}
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.version.outputs.current }}
