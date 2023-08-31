@@ -42,3 +42,8 @@ Resources:
               - lambda:CreateFunctionUrlConfig
               - lambda:GetFunctionUrlConfig
             Resource: "*"
+          - Effect: Allow
+            Action:
+              - sqs:CreateQueue
+              - sqs:GetQueueAttributes
+            Resource: "*"
