@@ -46,4 +46,5 @@ Resources:
             Action:
               - sqs:CreateQueue
               - sqs:GetQueueAttributes
+              - sqs:SetQueueAttributes
             Resource: "*"
