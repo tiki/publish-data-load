@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Ocean-Data Lambda Function
+
+Parameters:
+  MetadataQueue:
+    Type: String
+    Description: The name of the Metadata FIFO Queue.
+  TableName:
+    Type: String
+    Description: The name of the Table to process events for.
+  IngestQueue:
+    Type: String
+    Description: The ARN of the Ingest Queue.
+
+Resources:
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ocean-data
+      CodeUri: ../..
+      Handler: com.mytiki.ocean.data.App::handleRequest
+      Runtime: java17
+      Architectures:
+        - arm64
+      MemorySize: 512
+      Timeout: 20
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Enabled: true
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
+            MaximumBatchingWindowInSeconds: 10
+            Queue: !Ref IngestQueue
+            FilterCriteria:
+              Filters:
+                - Pattern: !Sub "{ \"body\" : { \"s3\" : { \"key\" : [ { \"prefix\": \"${TableName}/\" } ] } } }"
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !Ref MetadataQueue
+

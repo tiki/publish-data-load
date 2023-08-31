@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Ocean - Metadata Infrastructure
+
+Parameters:
+  RoleName:
+    Description: Name of the IAM Role for the deployment
+    Type: String
+    Default: "GitHubDeployOceanData"
+
+Resources:
+  Role:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: role.yml
+      Parameters:
+        GitHubOrg: tiki-bar
+        RepositoryName: tiki-ocean-data
+        RoleName: !Ref RoleName
+
+  Policy:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: policy.yml
+      Parameters:
+        RoleName: !Ref RoleName

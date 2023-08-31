@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  pull_request:
+    branches:
+      - main
+#    types:
+#      - closed
+
+env:
+  SESSION_NAME : "gh_action"
+  AWS_REGION : "us-east-2"
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  Deploy:
+    #if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
+    runs-on: ubuntu-latest
+    environment: Production
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '20'
+          distribution: 'zulu'
+
+      - name: Install xmlstarlet
+        run: sudo apt-get update && sudo apt-get install -y xmlstarlet
+
+      - name: AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::254962200554:role/GitHubDeployBase
+          role-session-name: ${{ env.SESSION_NAME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: SAM Deploy GitHub
+        run: cd infra/github && sam build && sam package && sam deploy
+
+      - name: AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::254962200554:role/GitHubDeployOceanData
+          role-session-name: ${{ env.SESSION_NAME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: SAM Deploy AWS
+        run: cd infra/aws && sam build && sam package && sam deploy
+
+      - name: Get Version
+        id: version
+        run: echo "current=$(xmlstarlet sel -t -m _:project -v _:version pom.xml)" >> $GITHUB_OUTPUT
+
+#      - name: Create Release
+#        uses: ncipollo/release-action@v1
+#        with:
+#          tag: ${{ steps.version.outputs.current }}

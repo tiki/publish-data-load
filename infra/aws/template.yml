@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Ocean - Data Infrastructure
+
+Parameters:
+  SourceBucket:
+    Type: String
+    Description: The name the bucket to allow messages from.
+  MetadataQueue:
+    Type: String
+    Description: The name of the Metadata FIFO Queue.
+  TableName:
+    Type: String
+    Description: The name of the Table to process events for.
+
+Resources:
+  Queue:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: queue.yml
+      Parameters:
+        SourceBucket: !Ref SourceBucket
+
+  Function:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: function.yml
+      Parameters:
+        MetadataQueue: !Ref MetadataQueue
+        TableName: !Ref TableName
+        IngestQueue: !GetAtt [Queue, Outputs.Arn]
+
+
