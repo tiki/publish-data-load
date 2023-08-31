@@ -16,5 +16,6 @@ image_repositories = []
 parameter_overrides = [
     "SourceBucket=mytiki-ingest",
     "MetadataQueue=ocean-catalog.fifo",
-    "IngestQueue=arn:aws:sqs:us-east-2:254962200554:ocean-catalog.fifo"
+    "IngestQueue=arn:aws:sqs:us-east-2:254962200554:ocean-catalog.fifo",
+    "TableName=logs"
 ]
