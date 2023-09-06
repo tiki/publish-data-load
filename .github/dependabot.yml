@@ -8,6 +8,10 @@ updates:
       prefix: "gh-action"
     labels:
       - "chore"
+    groups:
+      all:
+        patterns:
+          - "*"
 
   - package-ecosystem: "maven"
     directory: "/"
@@ -17,3 +21,10 @@ updates:
       prefix: "maven"
     labels:
       - "chore"
+    groups:
+      minor:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"

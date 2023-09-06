@@ -14,16 +14,29 @@ jobs:
     name: Add issue to project
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/add-to-project@v0.5.0
+      - name: Add to project
+        uses: actions/add-to-project@v0.5.0
         with:
           project-url: https://github.com/orgs/tiki/projects/1
-          github-token: ${{ secrets.GH_PROJECT_PAT }}
+          github-token: ${{ secrets.GH_PROJECT_PAT || github.token }}
+
   add-pr:
     if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' }}
     name: Add pull request to project
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/add-to-project@v0.5.0
+      - name: Add to project
+        uses: actions/add-to-project@v0.5.0
         with:
           project-url: https://github.com/orgs/tiki/projects/1
-          github-token: ${{ secrets.GH_PROJECT_PAT }}
+          github-token: ${{ secrets.GH_PROJECT_PAT || github.token }}
+        id: add-project
+
+      - name: Add to sprint
+        uses: titoportas/update-project-fields@v0.1.0
+        with:
+          project-url: https://github.com/orgs/tiki/projects/1
+          github-token: ${{ secrets.GH_PROJECT_PAT || github.token }}
+          item-id: ${{ steps.add-project.outputs.itemId }}
+          field-keys: Sprint
+          field-values: "[0]"
