@@ -38,5 +38,5 @@ jobs:
           project-url: https://github.com/orgs/tiki/projects/1
           github-token: ${{ secrets.GH_PROJECT_PAT || github.token }}
           item-id: ${{ steps.add-project.outputs.itemId }}
-          field-keys: Sprint
-          field-values: "[0]"
+          field-keys: Status,Sprint
+          field-values: In Progress,[0]

@@ -12,7 +12,6 @@ updates:
       all:
         patterns:
           - "*"
-
   - package-ecosystem: "maven"
     directory: "/"
     schedule:
