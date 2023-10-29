@@ -3,11 +3,14 @@
  * MIT license. See LICENSE file in root directory.
  */
 
-package com.mytiki.ocean.data;
+package com.mytiki.publish.data.load;
 
 import com.amazonaws.services.lambda.runtime.events.SQSBatchResponse;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
 import com.amazonaws.services.lambda.runtime.tests.annotations.Event;
+import com.mytiki.publish.data.load.AvroToParquet;
+import com.mytiki.publish.data.load.WriteHandler;
+import com.mytiki.publish.data.load.file.FileMetadata;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;

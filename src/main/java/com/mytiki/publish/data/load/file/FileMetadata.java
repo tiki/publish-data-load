@@ -3,7 +3,7 @@
  * MIT license. See LICENSE file in root directory.
  */
 
-package com.mytiki.ocean.data;
+package com.mytiki.publish.data.load.file;
 
 public class FileMetadata {
     private String table;

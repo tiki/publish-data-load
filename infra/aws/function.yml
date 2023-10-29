@@ -19,7 +19,7 @@ Resources:
     Properties:
       FunctionName: ocean-data
       CodeUri: ../..
-      Handler: com.mytiki.ocean.data.App::handleRequest
+      Handler: com.mytiki.publish.data.load.App::handleRequest
       Runtime: java17
       Architectures:
         - arm64
