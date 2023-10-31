@@ -50,10 +50,12 @@ Resources:
       Policies:
         - SQSSendMessagePolicy:
             QueueName: !Ref MetadataQueue
-        - Effect: Allow
-          Action:
-            - xray:PutTraceSegments
-            - xray:PutTelemetryRecords
-          Resource: "*"
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - xray:PutTraceSegments
+                - xray:PutTelemetryRecords
+              Resource: "*"
 
 
