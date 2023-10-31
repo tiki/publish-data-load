@@ -36,21 +36,24 @@ public class FileClient {
     private final String credentialsProvider;
     private final AwsS3 s3;
     private final AwsSQS sqs;
+    private final String writeBucket;
+    private final String writeQueue;
 
-    public FileClient(String credentialsProvider, String s3Region, String bucket, String sqsRegion, String queue) {
+    public FileClient(String credentialsProvider, String region, String writeBucket, String writeQueue) {
         this.credentialsProvider = credentialsProvider;
-        this.s3 = new AwsS3(s3Region, bucket);
-        this.sqs = new AwsSQS(sqsRegion, queue);
+        this.s3 = new AwsS3(region);
+        this.sqs = new AwsSQS(region);
+        this.writeBucket = writeBucket;
+        this.writeQueue = writeQueue;
     }
 
     public static FileClient load(String filename) {
         Properties properties = Props.withEnv(filename);
         return new FileClient(
-                properties.getProperty("s3.credentials.provider"),
-                properties.getProperty("s3.region"),
-                properties.getProperty("s3.bucket"),
-                properties.getProperty("sqs.region"),
-                properties.getProperty("sqs.url")
+                properties.getProperty("client.write.credentials.provider"),
+                properties.getProperty("client.region"),
+                properties.getProperty("client.write.bucket.name"),
+                properties.getProperty("client.write.queue.url")
         );
     }
 
@@ -58,9 +61,9 @@ public class FileClient {
         return load("aws.properties");
     }
 
-    public List<GenericRecord> read(String key) throws IOException {
+    public List<GenericRecord> read(String bucket, String key) throws IOException {
         List<GenericRecord> records = new ArrayList<>();
-        ResponseInputStream<GetObjectResponse> inputStream = s3.get(key);
+        ResponseInputStream<GetObjectResponse> inputStream = s3.get(bucket, key);
         DatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
         DataFileStream<GenericRecord> fileStream = new DataFileStream<>(inputStream, datumReader);
         while (fileStream.hasNext()) records.add(fileStream.next());
@@ -68,14 +71,13 @@ public class FileClient {
     }
 
     public String write(String table, List<GenericRecord> records) throws IOException {
-        String bucket = s3.getBucket();
         Schema schema = records.get(0).getSchema();
         String key = String.join("/", table, UUID.randomUUID() + ".parquet");
         Configuration conf = new Configuration();
         conf.set("fs.s3a.aws.credentials.provider", credentialsProvider);
 
         OutputFile file = HadoopOutputFile.fromPath(
-                new Path(String.join("/", "s3a:/", bucket, key)), conf);
+                new Path(String.join("/", "s3a:/", writeBucket, key)), conf);
         ParquetWriter<Object> writer = AvroParquetWriter
                 .builder(file)
                 .withSchema(schema)
@@ -86,10 +88,10 @@ public class FileClient {
         writer.close();
 
         FileMetadata metadata = new FileMetadata();
-        metadata.setSize(s3.size(key));
-        metadata.setUri(String.join("/", "s3:/", bucket, key));
+        metadata.setSize(s3.size(writeBucket, key));
+        metadata.setUri(String.join("/", "s3:/", writeBucket, key));
         metadata.setCount(records.size());
         metadata.setTable(table);
-        return sqs.notify(metadata);
+        return sqs.notify(writeQueue, metadata);
     }
 }

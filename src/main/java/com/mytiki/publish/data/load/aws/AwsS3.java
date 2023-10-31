@@ -15,27 +15,21 @@ import java.util.Properties;
 
 public class AwsS3 {
     private final S3Client s3;
-    private final String bucket;
 
-    public AwsS3(String region, String bucket) {
+    public AwsS3(String region) {
         s3 = S3Client.builder()
                 .region(Region.of(region))
                 .build();
-        this.bucket = bucket;
     }
 
-    public String getBucket() {
-        return bucket;
-    }
-
-    public ResponseInputStream<GetObjectResponse> get(String key) {
+    public ResponseInputStream<GetObjectResponse> get(String bucket, String key) {
         return s3.getObject(
                 GetObjectRequest.builder().bucket(bucket).key(key).build(),
                 ResponseTransformer.toInputStream()
         );
     }
 
-    public Long size(String key) {
+    public Long size(String bucket, String key) {
         GetObjectAttributesRequest attributesRequest = GetObjectAttributesRequest.builder()
                 .bucket(bucket)
                 .key(key)

@@ -15,23 +15,17 @@ import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 
 public class AwsSQS {
     private final SqsClient sqs;
-    private final String queue;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public AwsSQS(String region, String queue) {
+    public AwsSQS(String region) {
         sqs = SqsClient.builder()
                 .region(Region.of(region))
                 .build();
-        this.queue = queue;
     }
 
-    public String getQueue() {
-        return queue;
-    }
-
-    public String notify(FileMetadata metadata) throws JsonProcessingException {
+    public String notify(String url, FileMetadata metadata) throws JsonProcessingException {
         SendMessageRequest request = SendMessageRequest.builder()
-                .queueUrl(queue)
+                .queueUrl(url)
                 .messageBody(mapper.writeValueAsString(metadata))
                 .messageGroupId(metadata.getTable())
                 .build();

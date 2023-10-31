@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Publish Data Load
+
+Parameters:
+  WriteBucket:
+    Type: String
+    Description: The name the bucket to write collected data
+    Default: mytiki-publish
+  MetadataQueue:
+    Type: String
+    Description: The name of the metadata queue.
+    Default: ocean-metadata.fifo
+  NotificationQueue:
+    Type: String
+    Description: The name of the notification queue.
+    Default: publish-data-load
+
+Resources:
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ocean-data
+      CodeUri: ../..
+      Handler: com.mytiki.publish.data.load.App::handleRequest
+      Runtime: java17
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Timeout: 30
+      Tracing: Active
+      SnapStart:
+        ApplyOn: PublishedVersions
+      Environment:
+        Variables:
+          AWS_LAMBDA_EXEC_WRAPPER: "/opt/otel-sqs-handler"
+          CLIENT_REGION: !Ref AWS::AccountId
+          CLIENT_WRITE_BUCKET_NAME: !Ref WriteBucket
+          CLIENT_WRITE_QUEUE_URL: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${MetadataQueue}"
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Enabled: true
+            BatchSize: 10000
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
+            MaximumBatchingWindowInSeconds: 30
+            Queue: !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${NotificationQueue}"
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !Ref MetadataQueue
+        - Effect: Allow
+          Action:
+            - xray:PutTraceSegments
+            - xray:PutTelemetryRecords
+          Resource: "*"
+
+

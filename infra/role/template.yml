@@ -1,15 +1,28 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: GitHub OIDC Deployment Policy
+Description: Publish Data Load Role
 
 Parameters:
   RoleName:
-    Description: Name of the IAM Role for the inline policy
+    Description: Name of the IAM Role for the deployment
     Type: String
+    Default: "GitHubDeployPublishDataLoad"
 
 Resources:
   Role:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-2:${AWS::AccountId}:applications/core-aws-github-role
+        SemanticVersion: 0.0.3
+      Parameters:
+        GitHubOrg: tiki
+        RepositoryName: publish-data-load
+        RoleName: !Ref RoleName
+
+  Policy:
     Type: AWS::IAM::RolePolicy
+    DependsOn: Role
     Properties:
       RoleName: !Ref RoleName
       PolicyName: DeploymentPolicy
@@ -42,9 +55,6 @@ Resources:
               - lambda:CreateEventSourceMapping
               - lambda:GetEventSourceMapping
             Resource: "*"
-          - Effect: Allow
-            Action:
-              - sqs:CreateQueue
-              - sqs:GetQueueAttributes
-              - sqs:SetQueueAttributes
-            Resource: "*"
+
+
+
