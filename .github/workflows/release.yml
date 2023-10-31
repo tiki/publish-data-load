@@ -4,12 +4,12 @@ on:
   pull_request:
     branches:
       - main
-    types:
-      - closed
+#    types:
+#      - closed
 
 env:
-  SESSION_NAME : "gh_action"
-  AWS_REGION : "us-east-2"
+  SESSION_NAME: "gh_action"
+  AWS_REGION: "us-east-2"
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   Deploy:
-    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
+    #    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
     runs-on: ubuntu-latest
     environment: Production
     permissions:
@@ -45,17 +45,17 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: SAM Deploy GitHub
-        run: cd infra/github && sam build && sam package && sam deploy
+        run: cd infra/role && sam build && sam package && sam deploy
 
       - name: AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::254962200554:role/GitHubDeployOceanData
+          role-to-assume: arn:aws:iam::254962200554:role/GitHubDeployPublishDataLoad
           role-session-name: ${{ env.SESSION_NAME }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: SAM Deploy AWS
-        run: cd infra/aws && sam build && sam package && sam deploy
+        run: cd infra/function && sam build && sam package && sam deploy
 
       - name: Get Version
         id: version
