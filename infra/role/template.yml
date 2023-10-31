@@ -30,6 +30,16 @@ Resources:
         Version: '2012-10-17'
         Statement:
           - Effect: Allow
+            Action: cloudformation:*
+            Resource:
+              - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/publish-data-s3-stage*
+              - !Sub arn:aws:cloudformation:${AWS::Region}:aws:transform/Serverless-2016-10-31
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+            Resource: !Sub arn:aws:s3:::mytiki-sam-deploy/*
+          - Effect: Allow
             Action:
               - iam:CreateRole
               - iam:TagRole

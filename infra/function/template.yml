@@ -24,7 +24,7 @@ Resources:
   Function:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: ocean-data
+      FunctionName: publish-data-load
       CodeUri: ../..
       Handler: com.mytiki.publish.data.load.App::handleRequest
       Runtime: java17
