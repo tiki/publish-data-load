@@ -42,12 +42,16 @@ Resources:
           - Effect: Allow
             Action:
               - iam:CreateRole
+              - iam:GetRole
+              - iam:UpdateRole
+              - iam:DeleteRole
               - iam:TagRole
               - iam:GetRolePolicy
               - iam:PutRolePolicy
+              - iam:DeleteRolePolicy
               - iam:AttachRolePolicy
-              - iam:GetRole
-            Resource: "*"
+              - iam:DetachRolePolicy
+            Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/publish-data-load-*
           - Effect: Allow
             Action:
               - iam:PassRole
@@ -64,7 +68,8 @@ Resources:
               - lambda:ListTags
               - lambda:CreateEventSourceMapping
               - lambda:GetEventSourceMapping
-            Resource: "*"
+              - lambda:UpdateFunctionConfiguration
+            Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*
 
 
 
