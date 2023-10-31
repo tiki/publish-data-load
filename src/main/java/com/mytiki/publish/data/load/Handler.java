@@ -41,9 +41,10 @@ public class Handler implements RequestHandler<SQSEvent, SQSBatchResponse> {
             s3Event.getRecords().forEach(record -> {
                 try {
                     String key = record.getS3().getObject().getKey();
+                    String bucket = record.getS3().getBucket().getName();
                     String table = key.split("/")[0];
                     if (table == null) throw new IllegalArgumentException("No table name in key: " + key);
-                    List<GenericRecord> stagedRecords = client.read(key);
+                    List<GenericRecord> stagedRecords = client.read(bucket, key);
                     if (tableGrouping.containsKey(table)) tableGrouping.get(table).addAll(stagedRecords);
                     else tableGrouping.put(table, stagedRecords);
                 } catch (Exception ex) {

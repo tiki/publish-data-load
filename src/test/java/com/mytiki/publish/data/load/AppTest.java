@@ -12,10 +12,8 @@ import com.amazonaws.services.lambda.runtime.serialization.PojoSerializer;
 import com.amazonaws.services.lambda.runtime.serialization.events.LambdaEventSerializers;
 import com.amazonaws.services.lambda.runtime.tests.annotations.Event;
 import com.mytiki.publish.data.load.file.FileClient;
-import com.mytiki.publish.data.load.file.FileMetadata;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -32,7 +30,7 @@ public class AppTest {
     @BeforeEach
     void init() throws IOException {
         this.client = Mockito.mock(FileClient.class);
-        Mockito.lenient().doReturn(List.of()).when(client).read(Mockito.anyString());
+        Mockito.lenient().doReturn(List.of()).when(client).read(Mockito.anyString(), Mockito.anyString());
         Mockito.lenient().doReturn("dummy").when(client).write(Mockito.anyString(), Mockito.anyList());
     }
 

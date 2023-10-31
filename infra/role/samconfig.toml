@@ -1,19 +1,17 @@
 version = 0.1
 
 [default.global.parameters]
-stack_name = "ocean-data-aws"
+stack_name = "publish-data-load-role"
 s3_bucket = "mytiki-sam-deploy"
-s3_prefix = "ocean/data/aws"
+s3_prefix = "publish/data/load/role"
 region = "us-east-2"
 
 [default.deploy.parameters]
 confirm_changeset = false
 capabilities = [
     "CAPABILITY_IAM",
+    "CAPABILITY_NAMED_IAM",
     "CAPABILITY_AUTO_EXPAND"
 ]
 image_repositories = []
-parameter_overrides = [
-    "SourceBucket=mytiki-ingest",
-    "MetadataQueue=ocean-catalog.fifo"
-]
+parameter_overrides = []

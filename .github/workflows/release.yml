@@ -8,8 +8,8 @@ on:
       - closed
 
 env:
-  SESSION_NAME : "gh_action"
-  AWS_REGION : "us-east-2"
+  SESSION_NAME: "gh_action"
+  AWS_REGION: "us-east-2"
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -37,6 +37,10 @@ jobs:
       - name: Install xmlstarlet
         run: sudo apt-get update && sudo apt-get install -y xmlstarlet
 
+      - name: SetVars
+        run: |
+          sed -i 's/${AWS::AccountId}/${{ secrets.AWS_ACCOUNT_ID }}/' infra/role/template.yml
+
       - name: AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -45,17 +49,17 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: SAM Deploy GitHub
-        run: cd infra/github && sam build && sam package && sam deploy
+        run: cd infra/role && sam build && sam package && sam deploy
 
       - name: AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::254962200554:role/GitHubDeployOceanData
+          role-to-assume: arn:aws:iam::254962200554:role/GitHubDeployPublishDataLoad
           role-session-name: ${{ env.SESSION_NAME }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: SAM Deploy AWS
-        run: cd infra/aws && sam build && sam package && sam deploy
+        run: cd infra/function && sam build && sam package && sam deploy
 
       - name: Get Version
         id: version

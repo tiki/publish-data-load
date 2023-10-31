@@ -1,16 +1,15 @@
 version = 0.1
 
 [default.global.parameters]
-stack_name = "ocean-data-github"
+stack_name = "publish-data-load-function"
 s3_bucket = "mytiki-sam-deploy"
-s3_prefix = "ocean/data/github"
+s3_prefix = "publish/data/load/function"
 region = "us-east-2"
 
 [default.deploy.parameters]
 confirm_changeset = false
 capabilities = [
     "CAPABILITY_IAM",
-    "CAPABILITY_NAMED_IAM",
     "CAPABILITY_AUTO_EXPAND"
 ]
 image_repositories = []
