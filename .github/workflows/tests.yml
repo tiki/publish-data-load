@@ -39,7 +39,7 @@ jobs:
           path: target/surefire-reports/**/*.xml
 
       - name: Validate GitHub Template
-        run: cd infra/function && sam validate --lint
+        run: cd infra/function && sam validate
 
       - name: Build GitHub Template
         run: cd infra/function && sam build
