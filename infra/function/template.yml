@@ -3,10 +3,14 @@ Transform: AWS::Serverless-2016-10-31
 Description: Publish Data Load
 
 Parameters:
+  ReadBucket:
+    Type: String
+    Description: The name the bucket to read data from
+    Default: mytiki-publish
   WriteBucket:
     Type: String
-    Description: The name the bucket to write collected data
-    Default: mytiki-publish
+    Description: The name the bucket to write data to
+    Default: mytiki-ocean
   MetadataQueue:
     Type: String
     Description: The name of the metadata queue.
@@ -57,5 +61,16 @@ Resources:
                 - xray:PutTraceSegments
                 - xray:PutTelemetryRecords
               Resource: "*"
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:ListBucket
+                - s3:GetBucketLocation
+                - s3:GetObjectVersion
+                - s3:GetObjectAttributes
+                - s3:PutObject
+              Resource:
+                - !Sub "arn:aws:s3:::${ReadBucket}"
+                - !Sub "arn:aws:s3:::${ReadBucket}/*"
 
 
