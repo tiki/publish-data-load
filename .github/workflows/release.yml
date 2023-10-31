@@ -37,6 +37,10 @@ jobs:
       - name: Install xmlstarlet
         run: sudo apt-get update && sudo apt-get install -y xmlstarlet
 
+      - name: SetVars
+        run: |
+          sed -i 's/${AWS::AccountId}/${{ secrets.AWS_ACCOUNT_ID }}/' infra/role/template.yml
+
       - name: AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
