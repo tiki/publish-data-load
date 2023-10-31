@@ -66,10 +66,12 @@ Resources:
               - lambda:GetFunction
               - lambda:UpdateFunctionCode
               - lambda:ListTags
-              - lambda:CreateEventSourceMapping
-              - lambda:GetEventSourceMapping
+              - lambda:UpdateFunctionUrlConfig
               - lambda:UpdateFunctionConfiguration
             Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*
-
-
-
+          - Effect: Allow
+            Action:
+              - lambda:CreateEventSourceMapping
+              - lambda:GetEventSourceMapping
+              - lambda:UpdateEventSourceMapping
+            Resource: "*"
